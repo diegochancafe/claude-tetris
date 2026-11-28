@@ -168,8 +168,36 @@ function drawBlock(context, x, y, colorIndex, size, alpha) {
   context.globalAlpha = 1;
 }
 
+// ---- Tema claro/oscuro ----
+const themeToggle = document.getElementById('theme-toggle');
+let gridColor = '#22222e';
+
+function applyTheme(theme) {
+  if (theme === 'light') document.documentElement.setAttribute('data-theme', 'light');
+  else document.documentElement.removeAttribute('data-theme');
+  const isLight = theme === 'light';
+  themeToggle.textContent = isLight ? 'Tema oscuro' : 'Tema claro';
+  themeToggle.setAttribute('aria-pressed', String(isLight));
+  // cachear el color de la cuadrícula (no leer estilos en cada frame)
+  gridColor = getComputedStyle(document.documentElement).getPropertyValue('--grid').trim() || gridColor;
+  // con pausa o game over el bucle está detenido: repintar manualmente
+  if (typeof current !== 'undefined' && current && board) draw();
+}
+
+function getSavedTheme() {
+  try { return localStorage.getItem('tetris-theme') === 'light' ? 'light' : 'dark'; }
+  catch (e) { return 'dark'; }
+}
+
+themeToggle.addEventListener('click', () => {
+  const theme = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+  try { localStorage.setItem('tetris-theme', theme); } catch (e) { /* ignorar */ }
+  applyTheme(theme);
+  themeToggle.blur(); // evita que Space accione el botón en vez del hard drop
+});
+
 function drawGrid() {
-  ctx.strokeStyle = '#22222e';
+  ctx.strokeStyle = gridColor;
   ctx.lineWidth = 0.5;
   for (let c = 1; c < COLS; c++) {
     ctx.beginPath();
@@ -301,4 +329,5 @@ document.addEventListener('keydown', e => {
 
 restartBtn.addEventListener('click', init);
 
+applyTheme(getSavedTheme());
 init();
